@@ -11,7 +11,7 @@ import {
     FluxStore,
     Guild,
     RelationshipStore as PartialRelationshipStore,
-    User,
+    User
 } from "@vencord/discord-types";
 
 import { DiscordTag, FullChannel, FullMessage, FullUser, KeywordTrie } from "../types";
@@ -54,8 +54,10 @@ export namespace ExtendedStores {
         getHasSearchResults(channelId: Channel["id"]): boolean;
     }
 
-    export interface RelationshipStore
-        extends Omit<PartialRelationshipStore, "isBlockedForMessage" | "isIgnoredForMessage"> {
+    export interface RelationshipStore extends Omit<
+        PartialRelationshipStore,
+        "isBlockedForMessage" | "isIgnoredForMessage"
+    > {
         isBlockedForMessage(message: FullMessage): boolean;
         isIgnoredForMessage(message: FullMessage): boolean;
     }
@@ -68,7 +70,8 @@ export namespace ExtendedStores {
         canChatInGuild(guildId: Guild["id"]): boolean;
     }
 
-    export interface ChannelStore extends FluxStore, Omit<Stores.ChannelStore, "getChannel"> {
+    export interface ChannelStore
+        extends FluxStore, Omit<Stores.ChannelStore, "getChannel" | "loadAllGuildAndPrivateChannelsFromDisk"> {
         getChannel(channelId: Channel["id"]): FullChannel | undefined;
         loadAllGuildAndPrivateChannelsFromDisk(): Record<Channel["id"], FullChannel>;
     }
@@ -86,10 +89,7 @@ export namespace ExtendedStores {
     export interface UserSettingsProtoStore extends FluxStore {
         settings: {
             textAndImages: {
-                keywordFilterSettings?: Record<
-                    "profanity" | "sexualContent" | "slurs",
-                    { value: boolean }
-                >;
+                keywordFilterSettings?: Record<"profanity" | "sexualContent" | "slurs", { value: boolean }>;
             };
         };
     }
@@ -111,22 +111,22 @@ export namespace ExtendedStores {
 export enum LayoutType {
     DEFAULT = 0,
     LIST = 1,
-    GRID = 2,
+    GRID = 2
 }
 
 export enum SortOrder {
     LATEST_ACTIVITY = 0,
-    CREATION_DATE = 1,
+    CREATION_DATE = 1
 }
 
 export enum TagSetting {
     MATCH_SOME = "match_some",
-    MATCH_ALL = "match_all",
+    MATCH_ALL = "match_all"
 }
 
 export enum Duration {
     DURATION_AGO = 0,
-    POSTED_DURATION_AGO = 1,
+    POSTED_DURATION_AGO = 1
 }
 
 export interface ChannelState {
@@ -137,14 +137,25 @@ export interface ChannelState {
     tagSetting: TagSetting;
 }
 
-export interface ForumChannelStoreState {
+export interface ForumChannelStore {
     channelStates: Record<Channel["id"], ChannelState>;
-}
-
-export interface ForumChannelStore extends ForumChannelStoreState {
     getChannelState(channelId: Channel["id"]): ChannelState | undefined;
     toggleTagFilter(channelId: Channel["id"], tagId: DiscordTag["id"]): void;
 }
+
+export interface ChannelStateJSON {
+    layoutType: LayoutType;
+    sortOrder: SortOrder;
+    tagFilter: string[];
+    scrollPosition: 0;
+    tagSetting: TagSetting;
+}
+
+export interface ForumChannelStoreState {
+    channelStates: Record<Channel["id"], ChannelStateJSON>;
+}
+
+export type ForumChannelStoreCreator = (_set: unknown, _get: unknown) => ForumChannelStore;
 
 export interface ForumPostComposerStore {
     setCardHeight(channelId: Channel["id"], height: number): void;

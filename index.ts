@@ -9,17 +9,14 @@ import "./style.css";
 import { classNameFactory } from "@utils/css";
 import { proxyLazy } from "@utils/lazy";
 import definePlugin from "@utils/types";
-import { zustandCreate, zustandPersist } from "@webpack/common";
 
 import { ForumPost } from "./components/ForumPost";
 import { setForumChannelStore } from "./hooks/forums/useForumChannelStore";
 import { settings } from "./settings";
-import { ForumChannelStore, ForumChannelStoreState, MissingGuildMemberStore } from "./stores";
-import { indexedDBStorageFactory } from "./utils";
+import { ForumChannelStore, MissingGuildMemberStore } from "./stores";
+import { initializeStore } from "./stores/ForumChannelStore";
 
 export const cl = classNameFactory();
-
-const STORAGE_KEY = "BetterForums";
 
 export default definePlugin({
     name: "BetterForums",
@@ -27,8 +24,8 @@ export default definePlugin({
     authors: [
         {
             name: "Davri",
-            id: 457579346282938368n,
-        },
+            id: 457579346282938368n
+        }
     ],
     settings,
     patches: [
@@ -36,17 +33,17 @@ export default definePlugin({
             find: ".getHasSearchResults",
             replacement: {
                 match: /\.memo\(/,
-                replace: ".memo($self.ForumPost??",
-            },
+                replace: ".memo($self.ForumPost??"
+            }
         },
         {
             find: "toggleTagFilter=",
             replacement: {
                 match: /let (\i)=\(0,\i\.\i\)/,
-                replace: "let $1=$self.createStore",
+                replace: "let $1=$self.createStore"
             },
-            predicate: () => settings.store.keepState,
-        },
+            predicate: () => settings.store.keepState
+        }
     ],
     start() {
         // Initialize store as soon as Flux is available
@@ -54,18 +51,10 @@ export default definePlugin({
     },
     ForumPost,
     createStore(storeCreator: (_set: unknown, _get: unknown) => ForumChannelStore) {
-        const useStore = proxyLazy<() => ForumChannelStore>(() =>
-            zustandCreate(
-                zustandPersist(storeCreator, {
-                    name: `${STORAGE_KEY}-state`,
-                    storage: indexedDBStorageFactory<ForumChannelStoreState>(),
-                    partialize: ({ channelStates }: ForumChannelStore) => ({ channelStates }),
-                })
-            )
-        );
+        const useStore = proxyLazy(() => initializeStore(storeCreator));
 
         setForumChannelStore(useStore);
 
         return useStore;
-    },
+    }
 });
